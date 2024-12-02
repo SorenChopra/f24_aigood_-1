@@ -80,3 +80,45 @@ def metrics(zipped_list):
   mets_dict = {'Precision': round(precision,2), 'Recall': round(recall,2), 'F1': round(f1,2), 'Accuracy': round(accuracy,2)}
   #finally, return the dictionary
   return mets_dict
+
+
+from sklearn.ensemble import RandomForestClassifier
+
+def run_random_forest(train, test, target, n):
+  #target is target column name
+  #n is number of trees to use
+
+
+  assert target in train   #have not dropped it yet
+  assert target in test
+
+  #your code below - copy, paste and align from above
+  from sklearn.ensemble import RandomForestClassifier
+  clf = RandomForestClassifier(n_estimators=n, max_depth=2, random_state=0)   #clf stands for "classifier"
+  
+  X = up_drop_column(train, target)
+  y = up_get_column(train, target )
+  assert isinstance(y,list)
+  assert len(y)==len(X)
+
+  clf.fit(X, y)
+
+  k_feature_table = up_drop_column(test, target)
+  k_actuals = up_get_column(test, target)
+
+  probs = clf.predict_proba(up_drop_column(test,target))  #Note no need here to transform k_feature_table to list - we can just use the table. Nice.
+
+  assert len(probs)==len(k_actuals)
+  assert len(probs[0])==2
+
+  pos_probs = [p for n,p in probs]
+  all_mets = []
+  for t in thresholds:
+   predictions = [1 if pos>t else 0 for pos in pos_probs]
+   pred_act_list = up_zip_lists(predictions, k_actuals)
+   mets = metrics(pred_act_list)
+   mets['Threshold'] = t
+   all_mets = all_mets + [mets]
+
+  metrics_table = up_metrics_table(all_mets)
+  return metrics_table
